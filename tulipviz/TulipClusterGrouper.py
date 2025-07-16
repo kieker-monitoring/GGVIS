@@ -4,7 +4,7 @@ Groups a tulip graph into nested subgraphs based on common dot separated prefixe
 
 from tulip import tlp
 from collections import defaultdict
-from utils import *
+from tulipviz.utils import *
 
 class TulipClusterGrouper:
     def __init__(self):

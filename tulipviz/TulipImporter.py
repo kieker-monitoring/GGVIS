@@ -1,5 +1,5 @@
 from tulip import tlp
-from TulipPreprocessor import TulipPreprocessor
+from tulipviz.TulipPreprocessor import TulipPreprocessor
 
 class TulipImporter:
     def __init__(self, input):             

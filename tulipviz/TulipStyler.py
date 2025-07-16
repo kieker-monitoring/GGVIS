@@ -7,7 +7,6 @@ class TulipStyler:
     def style_graph(self, graph):       
         self._style_nodes(graph)
         self._style_edges(graph)
-        #self._style_bbox_labels(graph)
         
     def _style_nodes(self, graph):
         viewSize = graph.getProperty("viewSize")

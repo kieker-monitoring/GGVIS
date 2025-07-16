@@ -1,10 +1,10 @@
 from tulip import tlp
-from TulipClusterGrouper import TulipClusterGrouper
-from TulipImporter import TulipImporter
-from TulipExporter import TulipExporter
-from TulipStyler import TulipStyler
-from TulipBBox import TulipBBox
-from utils import *
+from tulipviz.TulipClusterGrouper import TulipClusterGrouper
+from tulipviz.TulipImporter import TulipImporter
+from tulipviz.TulipExporter import TulipExporter
+from tulipviz.TulipStyler import TulipStyler
+from tulipviz.TulipBBox import TulipBBox
+from tulipviz.utils import *
 
 class TulipVisualization:
     def __init__(self, input, output):
@@ -13,18 +13,15 @@ class TulipVisualization:
         self._styler = TulipStyler()
         self._grouper = TulipClusterGrouper()
         self._boxer = TulipBBox()
-                
-        tlp.initTulipLib()
-        tlp.loadPlugins()  
-        
-        #import 
         self._graph = self._importer.graph
-
-        # properties
+            
         self._alt = self._graph.getLayoutProperty("altLayout")
         self._bbox = self._graph.getBooleanProperty("isBoundingBox")
         self._view = self._graph.getLayoutProperty("viewLayout")
         self._hoy = self._graph.getStringProperty("bboxLabel")
+        
+        tlp.initTulipLib()
+        tlp.loadPlugins()  
                
         # group graph
         self._styler.style_graph(self._graph)
@@ -36,7 +33,8 @@ class TulipVisualization:
         self._edge_bundling(self._graph)
         self._styler._style_bbox_labels(self._graph)
         
-        self._exporter._export_graph(self._graph)
+    def export(self, type="svg", no_fix=False):
+        self._exporter._export_graph(self._graph, type, no_fix)
                                   
     def _bottom_up(self, graph):
         subgraphs = graph.getSubGraphs()
@@ -65,7 +63,7 @@ class TulipVisualization:
                 for n in s.getNodes():
                     self._view[n] += diff
                     
-        # resize boxes accordingly     
+        # create bounding box   
         if graph.getSuperGraph() != graph:           
             self._boxer.create_bbox(graph)                   
                             
@@ -75,14 +73,7 @@ class TulipVisualization:
         params['edge length measurement'] = "midpoint"
         params['allowed positions'] = "all"
         graph.applyLayoutAlgorithm('FM^3 (OGDF)', property, params)
-        
-    def _sugiyama(self, graph, property):
-        algorithm = "Sugiyama (OGDF)"
-        params = tlp.getDefaultPluginParameters(algorithm, graph)
-        params['node distance'] = 6
-        params['layer distance'] = 6
-        graph.applyLayoutAlgorithm(algorithm, property, params)
-        
+               
     def _fast_overlap_removal(self, graph, property):
         algorithm = "Fast Overlap Removal"
         params = tlp.getDefaultPluginParameters(algorithm, graph)

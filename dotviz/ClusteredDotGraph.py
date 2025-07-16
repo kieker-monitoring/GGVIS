@@ -1,15 +1,13 @@
 """
 Groups components into clusters in a DOT file produced by the MVIS tool.
-
-This script parses the DOT graph and organizes related components into logical clusters
-to improve visualization and structure.
+This parses the DOT graph and organizes related components into logical clusters.
 """
 
-import pydot, sys
-from indent_dot import indent_dot
+import pydot
+from dotviz.indent_dot import indent_dot
 
 class ClusteredDotGraph:
-    def __init__(self, input_file, output_file, color="#ffffff", colordiff=-15):
+    def __init__(self, input_file, output_file, color="#ffd000", colordiff=-.045):
         self._graph = pydot.graph_from_dot_file(input_file)[0]
         self._nodes = self._graph.get_nodes()
         self._clusters = {}
@@ -27,11 +25,14 @@ class ClusteredDotGraph:
         self.add_edges()
         
         self._output_file = output_file
+        
+    @property
+    def graph(self):
+        return self._outgraph
 
     def group_clusters(self):
         for node in self._nodes:   
             l = (node.get_label() or "").replace("<<assembly component>>\n", "").strip('"').strip()
-            print(l)
             node.set_label(l)
             name = node.get_name().strip('"')
             parts = name.split(".")
@@ -61,34 +62,29 @@ class ClusteredDotGraph:
                 parent.add_node(node)
 
     def add_edges(self):
-        for edge in self._graph.get_edges():           
+        for edge in self._graph.get_edges():  
+            edge.set_color("#808080")         
             self._outgraph.add_edge(edge)
 
     def export(self):
         self._outgraph.write(self._output_file)
         indent_dot(self._output_file)
 
-    def adjust_hex_color(self, hex_color, offset):
+    def adjust_hex_color(self, hex_color, alpha):
         if not hex_color.startswith('#') or len(hex_color) != 7:
             raise ValueError("Color must be in format '#RRGGBB'")
-
+        
         r = int(hex_color[1:3], 16)
         g = int(hex_color[3:5], 16)
         b = int(hex_color[5:7], 16)
 
-        r_new = max(0, min(255, r + offset))
-        g_new = max(0, min(255, g + offset))
-        b_new = max(0, min(255, b + offset))
+        r_new = int(alpha * r + (1 - alpha) * 255)
+        g_new = int(alpha * g + (1 - alpha) * 255)
+        b_new = int(alpha * b + (1 - alpha) * 255)
 
         return f'#{r_new:02X}{g_new:02X}{b_new:02X}'
+        
 
-if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python3 table.py <input.dot> <output-name>")
-        sys.exit(1)
-
-    c = ClusteredDotGraph(sys.argv[1], sys.argv[2])
-    c.export()
 
 
 
