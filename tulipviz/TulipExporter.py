@@ -12,9 +12,9 @@ class TulipExporter:
     
     def _export_graph(self, graph, type="svg", no_fix=False):
         if type == "svg":         
-            self.export_svg(graph, self._output)
+            self.export_svg(graph, f"{self._outname}.svg")
             if not no_fix:
-                push_white_groups_to_end(self._output, self._output)
+                push_white_groups_to_end(f"{self._outname}.svg", f"{self._outname}.svg")
         else:
             self.export_svg(graph, "temp.svg")
             if not no_fix:

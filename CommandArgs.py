@@ -1,9 +1,14 @@
 import argparse
 
 USAGE = "usage: python3 path/to/main.py <inputdir> <outputdir> <mode> (--no-fix)"
-DESCRIPTION = "A tool compatible with the MVIS tool. Generates graph visuals grouped by common prefixes.\
-                About the rendering engines: dot can be used up to small graphs, fdp medium graphs and tulip up to large graphs. Tulip is definitely the fastest of the 3.\
-                if you want to skip thing up with tulip, skip the esthetic layering fix. It can take the majority of the process time for larger graphs (80% in worst cases)"
+DESCRIPTION = (
+    "A visualization tool compatible with the MVIS framework. Generates graph visuals grouped by common prefixes "
+    "for better organization and readability.\n"
+    "Rendering engine guidelines:\n"
+    "- dot: Works only for small graphs.\n"
+    "- fdp: Works up to medium-sized graphs.\n"
+    "- tulip: Works up to large graphs and significantly faster than the other engines.\n"
+)
 EXPORT = ["svg", "pdf", "png"]
 LAYOUT = ["tulip", "fdp", "dot"]
 
