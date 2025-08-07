@@ -29,22 +29,3 @@ class TulipStyler:
         for edge in graph.getEdges():
             viewBorderWidth[edge] = 5.0
             viewColor[edge] = tlp.Color.Gray
-            
-    def _style_bbox_labels(self, graph):
-        view = graph.getLayoutProperty("viewLayout")
-        viewSize = graph.getProperty("viewSize")
-        viewLabel = graph.getProperty("viewLabel")
-        viewShape = graph.getProperty("viewShape")
-        viewColor = graph.getProperty("viewColor")
-        externLabel = graph.getProperty("bboxLabel")   
-        bbox = graph.getProperty("isBoundingBox")      
-                      
-        for node in graph.getNodes():
-            if bbox[node]:
-                label_node = graph.addNode()
-
-                viewSize[label_node] = tlp.Size((len(externLabel[node])) * self._fontsize * 2, 5 * self._fontsize * 2, 0)
-                viewColor[label_node] = tlp.Color(0, 0, 0, 0)
-                viewShape[label_node] = tlp.NodeShape.Square
-                viewLabel[label_node] = externLabel[node]
-                view[label_node] = view[node] + tlp.Coord(0, viewSize[node][1]/2 - 20, 0)
