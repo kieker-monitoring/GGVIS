@@ -1,3 +1,6 @@
+# Layering fix for tulip.
+# Pushes the component nodes in front of the bounding boxes nodes.
+
 from lxml import etree as ET
 
 def is_white_group(group, ns):

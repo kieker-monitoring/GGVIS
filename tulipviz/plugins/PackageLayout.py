@@ -1,7 +1,18 @@
+# This file was written as part of a research projet.
+# https://arxiv.org/abs/2507.23425
+# 
+# Author: Daphné Larrivain
+
+# This plugin performs a nested layout by arranging subgraph hierarchies within their respective bounding boxes.
+# Applies a layout algorithm to all subgraphs from the bottom up and creates bounding boxes on the fly.
+# This helps size their bounding boxes correctly.
+# When laying out a graph, its direct nodes are handled normally.
+# Subgraphs and their bounding boxes are abstracted as single nodes.
+
 from tulip import tlp
 import tulipplugins
 
-class GeneralAlgorithmExample(tlp.Algorithm):
+class PackageLayout(tlp.Algorithm):
     def __init__(self, context):
         tlp.Algorithm.__init__(self, context)
         self.addStringCollectionParameter("algorithm",
@@ -25,64 +36,72 @@ class GeneralAlgorithmExample(tlp.Algorithm):
                                inParam=True,
                                outParam=False,
                                valuesDescription='')
-        
-        self._boxer = TulipBBox()
+      
+        self._boxer = BoundingBoxManager()
 
     def check(self):
         return (True, "Ok")
 
     def run(self):
-        _alt = self.graph.getLayoutProperty("altLayout")
-        _view = self.graph.getLayoutProperty("viewLayout")
         self.graph.getBooleanProperty("isBoundingBox")
-        self.graph.getStringProperty("bboxLabel")
-        
-        self._boxer.set_color(self.dataSet["bounding box color"])
-        
-        self._bottom_up(self.graph, _alt, _view, globals()[self.dataSet["algorithm"]])
-        bbox_labels(self.graph, self.dataSet["bounding box label size"])
+        self.graph.getStringProperty("bboxLabel")      
+        self._boxer.set_color(self.dataSet["bounding box color"])       
+        self.layout(self.graph, globals()[self.dataSet["algorithm"]])
+        self._boxer.bbox_labels(self.graph, self.dataSet["bounding box label size"])
         return True
-    
-    #########################################
-    
-    ## @todo modifier  alt_layout, view_layout, layout_func  et mettre dans func parent wrapper
-                    
-    def _bottom_up(self, graph, alt_layout, view_layout, layout_func):
-        subgraphs = graph.getSubGraphs()
-        subgraph_list = []
-        while subgraphs.hasNext():
-            subgraph_list.append(subgraphs.next())
-
-        for subgraph in subgraph_list:
-            self._bottom_up(subgraph, alt_layout, view_layout, layout_func)
-
-        # lay out the graph
-        layout_func(graph, alt_layout)
-        fast_overlap_removal(graph, alt_layout)
-        
-        # update the direct node children
-        direct_children = direct_nodes(graph)
-        for n in direct_children:
-            view_layout[n] = alt_layout[n]
+       
+    def layout(self, graph, layout_func): 
+        '''
+        Applies a layout algorithm to all subgraphs from the bottom up.
+        This helps size their bounding boxes correctly.
+        When laying out a graph, its direct nodes are handled normally.
+        Subgraphs and their bounding boxes are abstracted as single nodes.
+        '''
+        alt_layout = self.graph.getLayoutProperty("altLayout")
+        view_layout = self.graph.getLayoutProperty("viewLayout")
             
-        # translate all subgraphs to their bbox
-        for s in subgraph_list:
-            if self._boxer.has_bbox(s): 
-                box = self._boxer.get_bbox(s)
-                diff = alt_layout[box] - view_layout[box]
-                view_layout[box] = alt_layout[box]
-                for n in s.getNodes():
-                    view_layout[n] += diff
-                    
-        # create bounding box   
-        if graph.getSuperGraph() != graph:           
-            self._boxer.create_bbox(graph) 
+        def _bottom_up(graph):
+            subgraphs = graph.getSubGraphs()
+            subgraph_list = []
+            while subgraphs.hasNext():
+                subgraph_list.append(subgraphs.next())
+
+            for subgraph in subgraph_list:
+                _bottom_up(subgraph)
+
+            # lay out the graph
+            layout_func(graph, alt_layout)
+            fast_overlap_removal(graph, alt_layout)
+            
+            # update the direct node children
+            direct_children = direct_nodes(graph)
+            for n in direct_children:
+                view_layout[n] = alt_layout[n]
+                
+            # translate all subgraphs to their bbox
+            for s in subgraph_list:
+                if self._boxer.has_bbox(s): 
+                    box = self._boxer.get_bbox(s)
+                    diff = alt_layout[box] - view_layout[box]
+                    view_layout[box] = alt_layout[box]
+                    for n in s.getNodes():
+                        view_layout[n] += diff
+                        
+            # create bounding box   
+            if graph.getSuperGraph() != graph:           
+                self._boxer.create_bbox(graph) 
+                
+        _bottom_up(graph)
 
 ################################################################################
 #### Standalone Funcs
 ################################################################################
 
 def direct_nodes(graph):
+    '''
+    Returns the direct child nodes of a given graph.
+    Excludes nodes that belong to its subgraphs and bounding boxes nodes.
+    '''
     bbox = graph.getBooleanProperty("isBoundingBox")
     descendants = []
     for g in graph.getSubGraphs():
@@ -107,51 +126,21 @@ def fast_overlap_removal(graph, property):
     params["y border"] = 10
     graph.applyLayoutAlgorithm("Fast Overlap Removal", property, params)
 
-def bbox_labels(graph, fontsize):
-    view = graph.getLayoutProperty("viewLayout")
-    viewSize = graph.getProperty("viewSize")
-    viewLabel = graph.getProperty("viewLabel")
-    viewShape = graph.getProperty("viewShape")
-    viewColor = graph.getProperty("viewColor")
-    externLabel = graph.getProperty("bboxLabel")   
-    bbox = graph.getProperty("isBoundingBox")      
-                      
-    for node in graph.getNodes():
-        if bbox[node]:
-            label_node = graph.addNode()
-
-            viewSize[label_node] = tlp.Size((len(externLabel[node])) * fontsize, 5 * fontsize, 0)
-            viewColor[label_node] = tlp.Color(0, 0, 0, 0)
-            viewShape[label_node] = tlp.NodeShape.Square
-            viewLabel[label_node] = externLabel[node]
-            view[label_node] = view[node] + tlp.Coord(0, viewSize[node][1]/2 - 20, 0)
-
 ################################################################################
-##### Bounding Box
+##### Bounding Box Manager
 ################################################################################
 
-class TulipBBox:
+class BoundingBoxManager:
+    '''
+    Helper class. Handles the bounding boxes manipulations.
+    '''
+    
     def __init__(self):
         self._boxes = {}
         self.color = tlp.Color(255, 0, 0, 15)
         
     def set_color(self, color):
         self.color = color
-           
-    def set_up_bbox(self, graph):
-        self._bottom_up(graph)
-        
-    def _bottom_up(self, graph):
-        subgraphs = graph.getSubGraphs()
-        subgraph_list = []
-        while subgraphs.hasNext():
-            subgraph_list.append(subgraphs.next())
-
-        for subgraph in subgraph_list:
-            self._bottom_up(subgraph)
-                       
-        if graph.getSuperGraph() != graph:           
-            self.create_bbox(graph)
                    
     def has_bbox(self, graph):
         return graph in self._boxes.keys()
@@ -183,19 +172,12 @@ class TulipBBox:
         
         self._boxes[subgraph] = box_node
         bbox = subgraph.getProperty("isBoundingBox") 
-        bbox[box_node] = True 
-
-    def size_bbox(self, subgraph):
-        if not self.has_bbox(subgraph):
-            return
-        box_node = self.get_bbox(subgraph)
-        layout = subgraph.getLayoutProperty('viewLayout')
-        size = subgraph.getSizeProperty('viewSize')
-        coords = self.compute_bbox(subgraph)
-        layout[box_node] = tlp.Coord(coords["center_x"], coords["center_y"], 0)
-        size[box_node] = tlp.Size(coords["width"], coords["height"], 1)        
+        bbox[box_node] = True
         
     def compute_bbox(self, subgraph):
+        '''
+        Determines the coordinates of the four bounding box corners to fully encapsulate the graph.
+        '''
         if subgraph is None:
             raise ValueError("Subgraph is None — cannot compute bounding box.")
 
@@ -237,12 +219,37 @@ class TulipBBox:
             "height": height}
         return res
     
-#######################################################
+    def bbox_labels(self, graph, fontsize):
+        view = graph.getLayoutProperty("viewLayout")
+        viewSize = graph.getProperty("viewSize")
+        viewLabel = graph.getProperty("viewLabel")
+        viewShape = graph.getProperty("viewShape")
+        viewColor = graph.getProperty("viewColor")
+        externLabel = graph.getProperty("bboxLabel")   
+        bbox = graph.getProperty("isBoundingBox")      
+                        
+        for node in graph.getNodes():
+            if bbox[node]:
+                label_node = graph.addNode()
 
-tulipplugins.registerPluginOfGroup("GeneralAlgorithmExample",
+                viewSize[label_node] = tlp.Size((len(externLabel[node])) * fontsize, 5 * fontsize, 0)
+                viewColor[label_node] = tlp.Color(0, 0, 0, 0)
+                viewShape[label_node] = tlp.NodeShape.Square
+                viewLabel[label_node] = externLabel[node]
+                view[label_node] = view[node] + tlp.Coord(0, viewSize[node][1]/2 - 20, 0)
+    
+################################################################################
+
+pluginDoc = """
+Performs a nested layout by arranging subgraph hierarchies within their respective bounding boxes.
+"""
+
+# The line below does the magic to register the plugin into the plugin database
+# and updates the GUI to make it accessible through the menus.
+tulipplugins.registerPluginOfGroup("PackageLayout",
                                    "Package Layout",
                                    "Daphné Larrivain",
                                    "07/08/2025",
-                                   "Performs a nested layout by arranging subgraph hierarchies within their respective bounding boxes",
+                                   pluginDoc,
                                    "1.0",
                                    "Python")

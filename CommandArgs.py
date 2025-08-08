@@ -7,10 +7,11 @@ DESCRIPTION = (
     "Rendering engine guidelines:\n"
     "- dot: Works only for small graphs.\n"
     "- fdp: Works up to medium-sized graphs.\n"
-    "- tulip: Works up to large graphs and significantly faster than the other engines.\n"
+    "- tulip-dot: Same strategy as tulip-fdp but with the Sugiyama algorithm under the hood (same as dot). Works up to medium-sized graphs.\n"
+    "- tulip-fdp: Works up to large graphs and significantly faster than the other engines.\n"
 )
 EXPORT = ["svg", "pdf", "png"]
-LAYOUT = ["tulip", "fdp", "dot"]
+LAYOUT = ["tulip-fdp", "fdp", "tulip-dot", "dot"]
 
 class CommandArgs:     
     def __init__(self):     
@@ -18,8 +19,10 @@ class CommandArgs:
         parser.add_argument("-i", "--input", required=True, type=str, help="Input file")
         parser.add_argument("-o", "--output", required=True, type=str, help="Output file")
         parser.add_argument("-t", "--output-type", default="svg", type=correct_mode_type, help=enumeration(EXPORT))
-        parser.add_argument("-m", "--mode", default="tulip", type=correct_mode_layout, help=enumeration(LAYOUT))
-        parser.add_argument("-nf", "--no-fix", action="store_true", help="When activated, skips the layering fix for tulip")             
+        parser.add_argument("-m", "--mode", default="tulip-fdp", type=correct_mode_layout, help=enumeration(LAYOUT))
+        parser.add_argument("-nc", "--no-curves", action="store_true", help="When activated, skips the edge curving for tulip")  
+        parser.add_argument("-nb", "--no-bundle", action="store_true", help="When activated, skips the edge bunding for tulip")  
+        parser.add_argument("-nf", "--no-fix", action="store_true", help="When activated, skips the layering fix for tulip")            
         self.args = parser.parse_args()
           
     @property
@@ -41,6 +44,14 @@ class CommandArgs:
     @property
     def no_fix(self):
         return self.args.no_fix
+    
+    @property
+    def no_curves(self):
+        return self.args.no_curves
+    
+    @property
+    def no_bundle(self):
+        return self.args.no_bundle
  
 def enumeration(items):
     items = [str(item) for item in items]

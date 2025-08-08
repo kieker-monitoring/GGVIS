@@ -1,5 +1,5 @@
 from tulip import tlp
-from tulipviz.layer_svg import push_white_groups_to_end
+from tulipviz.utils.layer_svg import push_white_groups_to_end
 import cairosvg, os
 
 class TulipExporter:

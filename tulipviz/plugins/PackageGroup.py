@@ -1,7 +1,7 @@
 from tulip import tlp
 import tulipplugins
 
-class GeneralAlgorithmExample(tlp.Algorithm):
+class PackageGroup(tlp.Algorithm):
     def __init__(self, context):
         tlp.Algorithm.__init__(self, context)
         self.addStringPropertyParameter("full component name",
@@ -73,10 +73,18 @@ class GeneralAlgorithmExample(tlp.Algorithm):
         prefix = self.longest_common_prefix(label1, label2, separator)
         return prefix
   
-tulipplugins.registerPluginOfGroup("GeneralAlgorithmExample",
+################################################################################
+
+pluginDoc = """
+Converts a flat graph into a hierarchy of nested subgraphs by partitioning nodes based on delimited segments of their component names.
+"""  
+  
+# The line below does the magic to register the plugin into the plugin database
+# and updates the GUI to make it accessible through the menus.
+tulipplugins.registerPluginOfGroup("PackageGroup",
                                    "Package Group",
                                    "Daphné Larrivain",
                                    "07/08/2025",
-                                   "Converts a flat graph into a hierarchy of nested subgraphs by partitioning nodes based on delimited segments of their component names",
+                                   pluginDoc,
                                    "1.0",
                                    "Python")
