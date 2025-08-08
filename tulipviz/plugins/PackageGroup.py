@@ -1,3 +1,8 @@
+# This file was written as part of a research projet.
+# https://arxiv.org/abs/2507.23425
+# 
+# Author: Daphné Larrivain
+
 from tulip import tlp
 import tulipplugins
 
