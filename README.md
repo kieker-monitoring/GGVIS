@@ -6,9 +6,14 @@
 
 ## About
 
-This tool works alongside the Kieker [MVIS](https://github.com/kieker-monitoring/kieker/tree/main/tools/mvis/) tool.
-It uses the [Tulip Framework](https://tulip.labri.fr/) to read `.dot` and `.graphml` files and renders nested graphs based on dot-separated component names, e.g., `urllib3.util.timeout.Timeout`.
-Other Graphviz layout engines, such as `dot` and `fdp`, are available for comparison.
+This tool works alongside the Kieker
+[MVIS](https://github.com/kieker-monitoring/kieker/tree/main/tools/mvis/) tool.
+It uses the [Tulip Framework](https://tulip.labri.fr/) to read `.dot` and
+`.graphml` files and renders nested graphs based on dot-separated component
+names, e.g., `urllib3.util.timeout.Timeout`.  Other Graphviz layout engines,
+such as `dot` and `fdp`, are available for comparison. The tool is actively
+maintained by the people from Kieker developer group and communities.
+
 Run with `--help` to see available options.
 
 ## Generating Nested Graphs
