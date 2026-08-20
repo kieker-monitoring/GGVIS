@@ -1,0 +1,19 @@
+[project]
+name = "GGVIS"
+version = "0.0.1"
+description = "Takes as input both dot and graphml and renders out a nested graph based on common dot separated component names (a.b.c)."
+authors = [
+    {name = "Daphné Larrivain",email = "daphne.larrivain@ecole.ensicaen.fr"}
+]
+license = {file = "LICENSE"}
+requires-python = "==3.13.5"
+dependencies = [
+    cairosvg==2.8.2,
+    lxml==6.0.0,
+    pydot==4.0.1,
+    tulip-python==6.0.0,
+]
+
+[build-system]
+requires = ["setuptools==68.2.2"]
+build-backend = "setuptools.build_meta"
